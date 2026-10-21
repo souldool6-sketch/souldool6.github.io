@@ -1,0 +1,296 @@
+/* ===== 리셋 & 변수 ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --g-blue:   #4285F4;
+  --g-red:    #EA4335;
+  --g-yellow: #FBBC05;
+  --g-green:  #34A853;
+  --bg:       #f8f9fa;
+  --text:     #202124;
+  --muted:    #5f6368;
+  --border:   rgba(0,0,0,0.10);
+  --shadow:   0 1px 6px rgba(32,33,36,.22);
+  --shadow-md:0 3px 14px rgba(32,33,36,.16);
+  --pill:     100px;
+  --trans:    0.2s cubic-bezier(.4,0,.2,1);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'Noto Sans KR', 'Google Sans', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;   /* 스크롤 없는 한 페이지 */
+}
+
+/* ===== 배경 캔버스 ===== */
+#bgCanvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* =====================================================
+   상단 헤더 바
+   ===================================================== */
+.top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── SDU 로고 ── */
+.sdu-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: opacity var(--trans);
+}
+.sdu-logo:hover { opacity: 0.78; }
+
+.sdu-badge {
+  font-family: 'Google Sans', 'Noto Sans KR', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* 구글 4색 그라디언트 */
+  background: linear-gradient(135deg, #4285F4 0%, #EA4335 40%, #FBBC05 70%, #34A853 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 2px 0;
+}
+
+.sdu-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── 헤더 날씨 (우측) ── */
+.header-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hw-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--pill);
+  padding: 5px 14px 5px 10px;
+  box-shadow: var(--shadow);
+  font-size: 0.82rem;
+  color: var(--text);
+  min-width: 120px;
+  transition: box-shadow var(--trans), transform var(--trans);
+  white-space: nowrap;
+}
+.hw-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* 날씨 카드 내부 */
+.hw-emoji  { font-size: 1.2rem; line-height: 1; }
+.hw-city   { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.hw-temp   { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; line-height: 1.15; }
+.hw-desc   { font-size: 0.68rem; color: var(--muted); }
+
+/* 날씨 로딩 */
+.weather-loading {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 0.78rem;
+}
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid #e0e0e0;
+  border-top-color: var(--g-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.weather-error { font-size: 0.72rem; color: var(--g-red); text-align: center; }
+
+/* =====================================================
+   메인 컨테이너 (검색)
+   ===================================================== */
+.main-container {
+  position: relative; z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 52px 16px 60px;   /* 헤더·푸터 높이 확보 */
+}
+
+/* ── 검색창 ── */
+.search-section {
+  width: 100%;
+  max-width: 560px;
+  animation: fadeInUp 0.55s ease both;
+}
+
+.search-form {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+  display: flex; align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--pill);
+  padding: 0 14px;
+  height: 50px;
+  box-shadow: var(--shadow);
+  transition: box-shadow var(--trans), border-color var(--trans);
+}
+.search-box:hover,
+.search-box:focus-within {
+  box-shadow: var(--shadow-md);
+  border-color: transparent;
+}
+
+.search-icon { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; margin-right: 10px; }
+
+.search-input {
+  flex: 1; border: none; outline: none;
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  font-size: 1rem; color: var(--text);
+  background: transparent;
+  caret-color: var(--g-blue);
+}
+.search-input::placeholder { color: #9aa0a6; }
+
+.mic-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 4px; display: flex; align-items: center; justify-content: center;
+  color: var(--g-blue); border-radius: 50%;
+  transition: background var(--trans);
+  width: 30px; height: 30px;
+}
+.mic-btn svg { width: 20px; height: 20px; }
+.mic-btn:hover { background: rgba(66,133,244,.08); }
+.mic-btn.listening { color: var(--g-red); animation: pulse 1s infinite; }
+
+/* 검색 제안 */
+.search-suggestions {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0 0 22px 22px;
+  box-shadow: var(--shadow-md);
+  margin-top: -26px;
+  overflow: hidden; display: none;
+}
+.suggestion-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; font-size: 0.88rem;
+  cursor: pointer; transition: background 0.13s; color: var(--text);
+}
+.suggestion-item:hover { background: #f8f9fa; }
+.suggestion-item svg { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+
+/* 검색 버튼 */
+.search-buttons {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.search-btn {
+  background: #f8f9fa; border: 1px solid #f8f9fa;
+  border-radius: 4px; color: var(--text);
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  font-size: 0.85rem; padding: 10px 18px;
+  cursor: pointer;
+  transition: box-shadow var(--trans), border-color var(--trans);
+  white-space: nowrap;
+}
+.search-btn:hover { box-shadow: 0 1px 3px rgba(32,33,36,.28); border-color: #dadce0; }
+.lucky-btn:hover  { background: #f0f4ff; border-color: #c5d1f7; }
+
+/* =====================================================
+   하단 명언 바
+   ===================================================== */
+.quote-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0; z-index: 20;
+  background: rgba(255,255,255,0.90);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 10px 24px;
+}
+
+.quote-bar-inner {
+  display: flex; align-items: center;
+  justify-content: center; gap: 6px;
+  max-width: 900px; margin: 0 auto;
+  position: relative;
+}
+
+.qb-open, .qb-close {
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--g-blue);
+  opacity: 0.4;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.qb-text {
+  font-size: 0.84rem;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.5;
+  text-align: center;
+  transition: opacity 0.3s;
+}
+
+.qb-author {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-style: normal;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.3s;
+}
+
+.qb-refresh {
+  position: absolute; right: 0;
+  background: none; border: none; cursor: pointer;
+  padding: 5px; border-radius: 50%;
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--trans), color var(--trans), transform 0.5s;
+}
+.qb-refresh svg { width: 16px; height: 16px; }
+.qb-refresh:hover { background: rgba(66,133,244,.08); color: var(--g-blue); transform: rotate(180deg); }
+
+/* ===== 애니메이션 ===== */
+@keyframes fadeInUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeInDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ===== 반응형 ===== */
+@media (max-width: 600px) {
+  .sdu-name { display: none; }
+  .hw-card  { min-width: 90px; padding: 4px 10px 4px 8px; }
+  .hw-desc  { display: none; }
+  .search-section { max-width: 100%; }
+  .qb-open, .qb-close { display: none; }
+}
